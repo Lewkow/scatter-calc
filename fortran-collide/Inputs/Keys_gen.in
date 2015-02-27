@@ -1,0 +1,58 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+													ASTROSCATT INPUT KEYS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#########################
+ Particle Information
+#########################
+He4                      ! Projectile [H, He3, He4, O]
+H                        ! Target [H, He3, He4, O]
+0												 | Particle Symmetry   | 0->Non-Idnt   1->Fermions  2->Bosons
+0												 | Frame to Compute    | 0->CM				 1->Lab
+0										     | Type of Calculation | 0->PW         1->EA       99->Both
+#########################
+ Calculations to Perform
+		0 -> Off 	1 -> On
+#########################
+0												 | Total Cross Section
+0                        | Numeric Integration Total Cross Section
+0                        | Diffusion Cross Section
+0						  					 | Differential Cross Section
+0                        | DC3D Diff. Cross Sec. with Energy
+0						  					 | Hard Sphere Test 
+0												 | Probability Density  
+0												 | 3D Prob. Den. with Energy
+0												 | Average Energy Loss Per Collision
+0												 | Phaseshift Write to File 
+0												 | Phaseshift Timing 
+0												 | Potential Tester
+#########################
+ Potential Tester Info 
+#########################
+0.1											 | Initial R
+10.0										 | Final R
+1000										 | Number of points
+#########################
+ DCS Angle Info 
+#########################
+0												 | Initial Angle
+180											 | Final Angle
+10											 | Number of Angles
+#########################
+ Energies to Use
+#########################
+0												 | Energies from File to Use
+#########################| If 0 use Energy Range Info
+ Energy Range Info
+#########################
+0.3											 | Initial Energy (eV)
+10000										 | Final Energy   (eV)
+10											 | Number of Energies
+#########################
+ Energies From File (eV)
+#########################
+100
+300
+1000

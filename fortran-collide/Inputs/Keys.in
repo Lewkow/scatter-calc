@@ -1,0 +1,111 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+													ASTROSCATT INPUT KEYS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#########################
+ Particle Information
+#########################
+He4                      ! Projectile [H, He3, He4, O]
+He4                      ! Target [H, He3, He4, O]
+0												 | Particle Symmetry   | 0->Non-Idnt   1->Fermions  2->Bosons
+0												 | Frame to Compute    | 0->CM				 1->Lab
+0										     | Type of Calculation | 0->PW         1->EA       99->Both
+#########################
+ Calculations to Perform
+		0 -> Off 	1 -> On
+#########################
+0												 | Total Cross Section
+0                        | Numeric Integration Total Cross Section
+1                        | Diffusion Cross Section
+0 					  					 | Differential Cross Section
+0                        | DC3D Diff. Cross Sec. with Energy
+0						  					 | Hard Sphere Test 
+0												 | Probability Density  
+0												 | 3D Prob. Den. with Energy
+0 											 | Random Scattering Angle vs Probability Write 
+0   										 | Average Energy Loss Per Collision
+0												 | Phaseshift Write to File 
+0												 | Phaseshift Timing 
+0												 | Potential Tester
+#########################
+ Potential Tester Info 
+#########################
+0.0001									 | Initial R
+0.7										 | Final R
+10000										 | Number of points
+#########################
+ DCS Angle Info 
+#########################
+0.0											 | Initial Angle
+180.0										 | Final Angle
+2000										 | Number of Angles
+#########################
+ Energies to Use
+#########################
+55 											 | Energies from File to Use
+#########################| If 0 use Energy Range Info
+ Energy Range Info
+#########################
+2900.0D0								 | Initial Energy (eV)
+3000.0D0 								 | Final Energy   (eV)
+10   									 | Number of Energies
+#########################
+ Energies From File (eV)
+#########################
+1.0D-2
+2.0D-2
+3.0D-2
+4.0D-2
+5.0D-2
+6.0D-2
+7.0D-2
+8.0D-2
+9.0D-2
+1.0D-1
+2.0D-1
+3.0D-1
+4.0D-1
+5.0D-1
+6.0D-1
+7.0D-1
+8.0D-1
+9.0D-1
+1.0D0
+2.0D0
+3.0D0
+4.0D0
+5.0D0 
+6.0D0
+7.0D0
+8.0D0
+9.0D0
+1.0D1
+2.0D1
+3.0D1
+4.0D1
+5.0D1 
+6.0D1
+7.0D1
+8.0D1
+9.0D1
+1.0D2
+2.0D2
+3.0D2
+4.0D2
+5.0D2
+6.0D2
+7.0D2
+8.0D2
+9.0D2
+1.0D3
+2.0D3
+3.0D3
+4.0D3
+5.0D3
+6.0D3
+7.0D3
+8.0D3
+9.0D3
+1.0D4

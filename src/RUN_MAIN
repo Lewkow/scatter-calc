@@ -1,0 +1,7 @@
+#!/bin/bash
+
+clear
+scalac *.scala
+scala -cp . runtime.Main 
+
+

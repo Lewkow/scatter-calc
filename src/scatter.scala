@@ -30,4 +30,30 @@ class Scatter(energyC: Double,
     println(s"Reduced Mass: $reduced_mass [u]")
   }
 
+  def setup_phaseshifts() {
+    var phase = new Phaseshift()
+  }
+
 }
+
+class Phaseshift() {
+  val MAX_GRID_SIZE = 100000
+  var grid_step_size: Double = 0.0d
+  var grid_start: Double = 0.0d
+  var grid_end: Double = 0.0d
+
+  import potential.Potential
+  val tester = new Potential("LJ")
+  var i = 0
+  for (i <- 0 to 30) {
+    var r: Double = i.toDouble + 0.001d
+    var v = tester.get_potential(r)
+    println(s"V($r) = $v") 
+  }
+
+  def grid_start_finder(energy: Double) = {
+    0.0d
+  }
+
+}
+

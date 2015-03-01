@@ -2,6 +2,6 @@
 
 clear
 scalac *.scala
-scala -cp . runtime.Main 
+scala -cp . runtime.scatter_calc 
 
 

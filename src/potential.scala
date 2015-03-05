@@ -1,18 +1,21 @@
 package potential
 
 class Potential(potential_methodC: String) {
-  val potential_method = potential_methodC
+  val potential_method: String = potential_methodC
 
   // pass interparticle distance [u]
-  def get_potential(r: Double) = {
+  def get_potential(r: Double): Double = {
     if (potential_method == "LJ") {
       lennard_jones(r, 1.0d, 1.0d)
+    }
+    else {
+      1.0d
     }
   }
 
   def lennard_jones(r: Double, 
                     well_depth: Double,
-                    wall_pos: Double) = {
+                    wall_pos: Double): Double = {
     if (r <= 0) {
       0.0d
     }

@@ -16,9 +16,9 @@ He4                      ! Target [H, He3, He4, O]
  Calculations to Perform
 		0 -> Off 	1 -> On
 #########################
-0												 | Total Cross Section
+1												 | Total Cross Section
 0                        | Numeric Integration Total Cross Section
-1                        | Diffusion Cross Section
+0                        | Diffusion Cross Section
 0 					  					 | Differential Cross Section
 0                        | DC3D Diff. Cross Sec. with Energy
 0						  					 | Hard Sphere Test 
@@ -44,12 +44,12 @@ He4                      ! Target [H, He3, He4, O]
 #########################
  Energies to Use
 #########################
-55 											 | Energies from File to Use
+0 											 | Energies from File to Use
 #########################| If 0 use Energy Range Info
  Energy Range Info
 #########################
-2900.0D0								 | Initial Energy (eV)
-3000.0D0 								 | Final Energy   (eV)
+10.0D0								 | Initial Energy (eV)
+100.0D0 								 | Final Energy   (eV)
 10   									 | Number of Energies
 #########################
  Energies From File (eV)

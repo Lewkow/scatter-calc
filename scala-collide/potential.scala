@@ -16,7 +16,7 @@ class Potential(potential_methodC: String) {
   def lennard_jones(r: Double, 
                     well_depth: Double,
                     wall_pos: Double): Double = {
-    if (r <= 0) {
+    if (r <= 0.0d) {
       0.0d
     }
     else {

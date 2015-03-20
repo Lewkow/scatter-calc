@@ -2,7 +2,8 @@ package potential
 
 class Potential(potential_methodC: String) {
   val potential_method: String = potential_methodC
-  val depth = get_depth()
+  val depth = get_depth(true)
+  val depth_pos = get_depth(false)
   print_values()
 
   // pass interparticle distance [u]
@@ -15,7 +16,7 @@ class Potential(potential_methodC: String) {
     }
   }
 
-  def get_depth(): Double = {
+  def get_depth(depth_mode: Boolean): Double = {
     val r_start: Double = 0.5d
     val r_end: Double = 20.0d
     val dr: Double = 0.001 
@@ -23,14 +24,23 @@ class Potential(potential_methodC: String) {
     var i: Int = 0
     var pot: Double = 0
     var deepest: Double = 0.0d
+    var deep_pos: Double = 0.0d
 
     while (r < r_end) {
       r = r_start + i.toDouble*r
       pot = get_potential(r)
-      if (pot < deepest) {deepest = pot}
+      if (pot < deepest) {
+        deepest = pot
+        deep_pos = r
+      }
       i = i + 1
     }
-    deepest
+    if (depth_mode == true) {
+      deepest
+    }
+    else {
+      deep_pos
+    }
   }
 
   def lennard_jones(r: Double, 
@@ -47,5 +57,6 @@ class Potential(potential_methodC: String) {
 
   def print_values() = {
     println(s"Depth:        $depth [eV]")
+    println(s"Depth Pos:    $depth_pos [a0]")
   }
 }

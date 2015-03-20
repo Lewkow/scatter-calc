@@ -8,22 +8,36 @@ class Scatter(energyC: Double,
               targetC: String,
               potential_typeC: String) {
 
+  import math.sqrt
+  val energy: Double = energyC
+  val coll = new Collision(projectileC, targetC)
+  val projectile: String = projectileC
+  val target: String = targetC
+  val potential_type: String = potential_typeC
+  val wavenumber: Double = math.sqrt(2.0d*coll.reduced_mass*energy)
+  val phase = new Phaseshift(energy, potential_type, coll)
+
+  def printValues() {
+    val grid_start = phase.grid.start_pos 
+    val grid_end = phase.grid.end_pos 
+    println(s"Energy:       $energy [eV]")
+    println(s"Grid Start:   $grid_start [a0]")
+    println(s"Grid End:     $grid_end [a0]")
+  }
+
+}
+
+class Collision(projectile: String,
+                target: String) {
+
   val masses = Map("H"->1.00782503207d,
                    "He3"->3.0160293191d,
                    "He4"->4.00260325415d,
                    "O"->15.99491461956d)
-  import math.sqrt
-  val energy: Double = energyC
-  val projectile: String = projectileC
-  val target: String = targetC
-  val potential_type: String = potential_typeC
   val projectile_mass: Double = masses(projectile)
   val target_mass: Double = masses(target)
   val reduced_mass: Double = reducedMass(projectile_mass,target_mass)
-  val wavenumber: Double = math.sqrt(2.0d*reduced_mass*energy)
-  val phase = new Phaseshift(energy, potential_type)
-
-
+  printValues()
 
   def reducedMass(proj: Double, targ: Double) = {
     val denom: Double = proj + targ
@@ -32,37 +46,43 @@ class Scatter(energyC: Double,
   }
 
   def printValues() {
-    val grid_start = phase.grid.start_pos 
-    val grid_end = phase.grid.end_pos 
     println(s"Projectile:   $projectile") 
     println(s"Mass:         $projectile_mass [u]")
     println(s"Target:       $target")
     println(s"Mass:         $target_mass [u]")
-    println(s"Energy:       $energy [eV]")
     println(s"Reduced Mass: $reduced_mass [u]")
-    println(s"Grid Start:   $grid_start [a0]")
-    println(s"Grid End:     $grid_end [a0]")
   }
 
 }
 
-class Phaseshift(energy: Double, potential_type: String) {
+class Phaseshift(energy: Double, potential_type: String, coll: Collision) {
   val MAX_GRID_SIZE = 100000
   val pot = new Potential(potential_type)
-  val grid = new Grid(energy, pot)
+  val grid = new Grid(energy, pot, coll)
 }
 
-class Grid(energyC: Double, pot: Potential) {
+class Grid(energyC: Double, pot: Potential, coll: Collision) {
   val energy: Double = energyC
   val start_pos: Double = grid_start_finder() 
   val end_pos: Double = grid_end_finder()
-  val N_grid: Int = get_N_grid() 
-  val dx: Double = (end_pos - start_pos)/(N_grid.toDouble - 1.0d)
-  val pos_grid = build_pos_grid()
-  val pot_grid = build_pot_grid()
+  val dr_grid: Double = grid_dr_finder()
+  val N_grid: Int = grid_N_finder() 
+  val pos_grid: Array[Double] = build_pos_grid()
+  val pot_grid: Array[Double] = build_pot_grid()
 
-  def get_N_grid(): Int = {
-    10000
+  def grid_dr_finder(): Double = {
+    val k_max: Double = math.sqrt(2.0d*coll.reduced_mass*(energy+pot.depth))
+    val h_max: Double = (1.0d/k_max)/20.0d
+    var step: Double = 7.0e-4
+    if (7.0e-4 > h_max) {
+      step = h_max
+    }
+    step
+  }  
+
+  def grid_N_finder() = {
+    val N_grid: Int = ((end_pos - start_pos)/dr_grid).toInt + 1
+    N_grid
   }
 
   def grid_end_finder() = {
@@ -115,7 +135,7 @@ class Grid(energyC: Double, pot: Potential) {
     val z = new Array[Double](N_grid)    
     var i: Int = 0
     for (i <- 0 to z.length-1) {
-      z(i) = start_pos + i.toDouble*dx
+      z(i) = start_pos + i.toDouble*dr_grid
     }
     z 
   }
@@ -124,13 +144,11 @@ class Grid(energyC: Double, pot: Potential) {
     val z = new Array[Double](N_grid)
     var i: Int = 0
     for (i <- 0 to z.length-1) {
-      var x: Double = start_pos + i.toDouble*dx
+      var x: Double = start_pos + i.toDouble*dr_grid
       z(i) = pot.get_potential(x)
     }   
     z
   }
-
-
 
 }
 

@@ -36,7 +36,8 @@ class Scatter(energyC: Double,
     val grid_end = phase.grid.end_pos 
     println(s"Projectile:   $projectile") 
     println(s"Mass:         $projectile_mass [u]")
-    println(s"Target:       $target Mass: $target_mass [u]")
+    println(s"Target:       $target")
+    println(s"Mass:         $target_mass [u]")
     println(s"Energy:       $energy [eV]")
     println(s"Reduced Mass: $reduced_mass [u]")
     println(s"Grid Start:   $grid_start [a0]")
@@ -65,7 +66,28 @@ class Grid(energyC: Double, pot: Potential) {
   }
 
   def grid_end_finder() = {
-    10.0d
+    val lim: Double = 1e-8
+    val dr: Double = 0.1d
+    var r: Double = start_pos
+    var pot1: Double = pot.get_potential(1.0d)
+    var pot2: Double = pot1
+    var dpot: Double = 0.0d
+    var going : Boolean = true
+    var i: Int = 1
+    var r_end: Double = start_pos
+
+    while (going == true) {
+      r = start_pos + i*dr
+      pot2 = pot.get_potential(r)
+      dpot = math.abs(pot2-pot1)
+      if (dpot < lim) {
+        r_end = r
+        going = false
+      }
+      pot1 = pot2
+      i = i + 1
+    }
+    r_end
   }
 
   def grid_start_finder() = {

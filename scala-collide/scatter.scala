@@ -2,6 +2,7 @@
 package scatter
 
 import potential.Potential
+import scala.collection.mutable.ListBuffer
 
 class Scatter(energyC: Double, 
               projectileC: String, 
@@ -14,7 +15,6 @@ class Scatter(energyC: Double,
   val projectile: String = projectileC
   val target: String = targetC
   val potential_type: String = potential_typeC
-  val wavenumber: Double = math.sqrt(2.0d*coll.reduced_mass*energy)
   val phase = new Phaseshift(energy, potential_type, coll)
 
   def printValues() {
@@ -39,10 +39,14 @@ class Collision(projectile: String,
   val reduced_mass: Double = reducedMass(projectile_mass,target_mass)
   printValues()
 
-  def reducedMass(proj: Double, targ: Double) = {
+  def reducedMass(proj: Double, targ: Double): Double = {
     val denom: Double = proj + targ
     val reduced_mass: Double = proj*targ/denom
     reduced_mass
+  }
+
+  def wavenumber(energy: Double): Double = {
+    math.sqrt(2.0d*reduced_mass*energy)
   }
 
   def printValues() {
@@ -55,11 +59,115 @@ class Collision(projectile: String,
 
 }
 
+class CrossSection(phases: ListBuffer[Double]) {
+
+  def total_cross_section(): Double = {
+    var i: Int = 0
+    var tcs: Double = 0.0d
+
+    for (i <- 0 to phases.length-1) {
+      var sin_phase = math.sin(phases(i))
+      tcs += (2.0d*i.toDouble+1.0d)*sin_phase*sin_phase
+    } 
+    tcs
+  }
+
+}
+
 class Phaseshift(energy: Double, potential_type: String, coll: Collision) {
   val MAX_GRID_SIZE = 100000
   val pot = new Potential(potential_type)
   val grid = new Grid(energy, pot, coll)
+  var phases = new ListBuffer[Double]
+  phases = get_phases()
+  var cross_sections = new CrossSection(phases)
+  val tcs = cross_sections.total_cross_section()
+  println(s"TCS:          $tcs")
+
+  def get_phases() = {
+    val small_phase: Double = 5.0e-7
+    var partial_wave: Int = 0
+    var keep_going: Boolean = true
+    var converge_counter: Int = 0
+    val max_converge_counter: Int = 30
+    var phase = new ListBuffer[Double]
+
+    while (keep_going == true) {
+      var current_phase = numerov(partial_wave)
+      phase += current_phase
+      if (math.abs(current_phase) < small_phase) {
+        converge_counter = converge_counter + 1
+      }
+      if (converge_counter > max_converge_counter) {
+        keep_going = false
+      }
+      partial_wave += 1
+    }
+    phase
+  }
+
+  def dummy_numerov(partial_wave: Int) = {
+    // dummy numerov function for now
+    val p: Double = (partial_wave + 1).toDouble
+    // println(p, 1.0d/p)
+    1.0d/(p*p)
+  }
+
+  def numerov(partial_wave: Int) = {
+    // dummy_numerov(partial_wave)
+    val big: Double = 1.0e20
+    val small: Double = 1.0e-20
+    val k: Double = coll.wavenumber(energy)
+    val k2: Double = k*k
+    val l2: Double = (partial_wave*(partial_wave+1)).toDouble
+    val hh: Double = (grid.dr_grid*grid.dr_grid)/12.0d
+    val effective_pot_grid: Array[Double] = grid.build_effective_pot_grid(k2, l2)
+    var wave = new Array[Double](grid.N_grid+2)
+    wave(0) = 0.0d
+    wave(1) = 0.1d
+    var i: Int = 1
+    for (i <- 1 to grid.N_grid-1) {
+      if (math.abs(wave(i)) > big) {
+        var j: Int = 0
+        for (j <- 0 to i) {
+          wave(j) = wave(j)*small
+        }
+      }
+      if (math.abs(wave(i)) < small) {
+        var j: Int = 0
+        for (j <- 0 to i) {
+          wave(j) = wave(j)*big
+        }
+      }
+      wave(i+1) = ( (2.0d-10.0d*hh*effective_pot_grid(i)*wave(i) - 
+        (1.0d+hh*effective_pot_grid(i-1))*wave(i-1)) ) / 
+        (1.0d+hh*effective_pot_grid(i+1))
+    }
+    val d1: Double = (wave(grid.N_grid-3)-wave(grid.N_grid-5))/(2.0d*grid.dr_grid)
+    val d2: Double = (wave(grid.N_grid-2)-wave(grid.N_grid-6))/(4.0d*grid.dr_grid)
+    val d4: Double = (wave(grid.N_grid)  -wave(grid.N_grid-8))/(8.0d*grid.dr_grid)
+    val d12: Double = d1 + (d1-d2)/3.0d 
+    val d24: Double = d2 + (d2-d4)/3.0d 
+    val grad: Double = d12 + (d12-d24)/15.0d
+    val kr: Double = k*grid.pos_grid(grid.NGrid-4)
+  }
 }
+  // 
+  // Fortran numerov module, need to write in scala
+  // 
+
+  // CALL AJ(KR,L,sine)
+  // CALL AN(KR,L,cose)
+  // CALL AJP(KR,L,dsine)
+  // CALL ANP(KR,L,dcose)
+
+  // dsine = dsine*K
+  // dcose = dcose*K
+
+  // S     = (dsine*Wave(NGrid-4) - sine*Grad)/K
+  // C     = (dcose*Wave(NGrid-4) - cose*Grad)/K
+  // ph    = ATAN(S/C)
+  // }
 
 class Grid(energyC: Double, pot: Potential, coll: Collision) {
   val energy: Double = energyC
@@ -131,7 +239,7 @@ class Grid(energyC: Double, pot: Potential, coll: Collision) {
     r
   }
 
-  def build_pos_grid() = {
+  def build_pos_grid():Array[Double] = {
     val z = new Array[Double](N_grid)    
     var i: Int = 0
     for (i <- 0 to z.length-1) {
@@ -140,15 +248,122 @@ class Grid(energyC: Double, pot: Potential, coll: Collision) {
     z 
   }
 
-  def build_pot_grid() = {
+  def build_pot_grid():Array[Double] = {
     val z = new Array[Double](N_grid)
     var i: Int = 0
     for (i <- 0 to z.length-1) {
       var x: Double = start_pos + i.toDouble*dr_grid
-      z(i) = pot.get_potential(x)
+      z(i) = -2.0d*coll.reduced_mass*pot.get_potential(x)
     }   
+    z
+  }
+
+  def build_effective_pot_grid(k2: Double, l2: Double):Array[Double] = {
+    val z = new Array[Double](N_grid)
+    var i: Int = 0
+    for (i <- 0 to z.length-1) {
+      z(i) = pot_grid(i) + k2 - l2/(pos_grid(i)*pos_grid(i))
+    }
     z
   }
 
 }
 
+class bessel() {
+ 
+  def spherical_bessel_1st(x: Double, j: Int) = {
+    val IAccuracy: Int = 20 
+    val big: Double = 1.0d20
+    val jbig: Int = j + (math.sqrt((j*IAccuracy).toDouble)).toInt
+    var bes: Double = 0.0d
+    var temp: Double = 0.0d
+    if (j == 0) {
+      bes = math.sin(x)
+    } else if (j == 1) {
+      bes = sin(x)/x - cos(x)
+    } else {
+      if (x > j.toDouble+0.5d) {
+        // use upward recurrance
+        var fm1: Double = math.sin(x)/x - math.cos(x)
+        var fm2: Double = math.sin(x)
+        var N: Int = 2
+        for (N <- 2 to j) {
+          var f: Double = (2.0d*N.toDouble-1.0d)*fm1/x - fm2
+          fm2 = fm1
+          fm1 = f
+        }
+        bes = f
+      } else {
+        // use downward recurrance
+        var fp1: Double = 1.0d-20
+        var fp2: Double = 1.0d-20
+        var N: Int = 0
+        for (N <- jbig to -1) {
+          var f: Double = (2.0d*N.toDouble+3.0d)*fp1/x - fp2
+          if (N == j) {
+            temp = f 
+          }
+          if (math.abs(f) > big) {
+            fp2 = fp2/big
+            fp1 = fp1/big
+            f   = f/big
+            if (N < j) {
+              temp = temp/big
+            }
+          }
+          fp2 = fp1
+          fp1 = f
+        }
+        bes = temp*math.sin(x)/f 
+      }
+    }
+    bes
+  }
+
+  def dx_spherical_bessel_1st(x: Double, j: Int) = {
+    if (j == 0) {
+      val = bes: Double = math.cos(x)
+    } else {
+      val pres: Double = spherical_bessel_1st(x,j)
+      val futr: Double = spherical_bessel_1st(x,j+1)
+      val past: Double = spherical_bessel_1st(x,j-1)
+      val bes: Double = ( pres/x - (futr - past) ) / 2.0d
+    }
+    bes
+  }
+
+  def spherical_bessel_2nd(x: Double, j: Int): Double = {
+    var bes: Double = 0.0d
+    if (j == 0) {
+      bes = -math.cos(x)
+    } else if (j == 1) {
+      bes = -math.cos(x)/x - math.sin(x)
+    } else {
+      var fm2: Double = -math.cos(x)
+      var fm1: Double = -math.cos(x)/x - math.sin(x)
+      var N: Int = 2
+      for (N <- 2 to j) {
+        var f: Double = (2.0d*N.toDouble-1.0d)*fm1/x - fm2
+        fm2 = fm1
+        fm1 = f
+      } 
+      bes = f 
+    }
+    bes
+  }
+
+  def dx_spherical_bessel_2nd(x:Double, j: Int): Double = {
+    var bes: Double = 0.0d
+    if (j == 0) {
+      bes = math.sin(x)
+    } else {
+      var pres: Double = spherical_bessel_2nd(x, j)
+      var futr: Double = spherical_bessel_2nd(x, j+1)
+      var past: Double = spherical_bessel_2nd(x, j-1)
+      bes = (pres/x-(futr-past))/2.0d 
+    }
+    bes
+  }
+
+
+}

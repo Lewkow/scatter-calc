@@ -94,6 +94,7 @@ class Phaseshift(energy: Double, potential_type: String, coll: Collision) {
 
     while (keep_going == true) {
       var current_phase = numerov(partial_wave)
+      // println(s"L: $partial_wave phase: $current_phase")
       phase += current_phase
       if (math.abs(current_phase) < small_phase) {
         converge_counter = converge_counter + 1
@@ -113,7 +114,7 @@ class Phaseshift(energy: Double, potential_type: String, coll: Collision) {
     1.0d/(p*p)
   }
 
-  def numerov(partial_wave: Int) = {
+  def numerov(partial_wave: Int): Double = {
     // dummy_numerov(partial_wave)
     val big: Double = 1.0e20
     val small: Double = 1.0e-20
@@ -126,7 +127,7 @@ class Phaseshift(energy: Double, potential_type: String, coll: Collision) {
     wave(0) = 0.0d
     wave(1) = 0.1d
     var i: Int = 1
-    for (i <- 1 to grid.N_grid-1) {
+    for (i <- 1 to grid.N_grid-2) {
       if (math.abs(wave(i)) > big) {
         var j: Int = 0
         for (j <- 0 to i) {
@@ -139,6 +140,7 @@ class Phaseshift(energy: Double, potential_type: String, coll: Collision) {
           wave(j) = wave(j)*big
         }
       }
+      // println(hh, effective_pot_grid(i+1), effective_pot_grid(i), effective_pot_grid(i-1), wave(i), wave(i-1))
       wave(i+1) = ( (2.0d-10.0d*hh*effective_pot_grid(i)*wave(i) - 
         (1.0d+hh*effective_pot_grid(i-1))*wave(i-1)) ) / 
         (1.0d+hh*effective_pot_grid(i+1))
@@ -149,25 +151,25 @@ class Phaseshift(energy: Double, potential_type: String, coll: Collision) {
     val d12: Double = d1 + (d1-d2)/3.0d 
     val d24: Double = d2 + (d2-d4)/3.0d 
     val grad: Double = d12 + (d12-d24)/15.0d
-    val kr: Double = k*grid.pos_grid(grid.NGrid-4)
+    val kr: Double = k*grid.pos_grid(grid.N_grid-4)
+    // println(d1, d2, d4, d12, d24)
+    // println(grad, kr)
+    val bessel = new Bessel()
+    var sine: Double = bessel.spherical_bessel_1st(kr, partial_wave)
+    var cose: Double = bessel.spherical_bessel_2nd(kr, partial_wave)
+    var dsine: Double = bessel.dx_spherical_bessel_1st(kr, partial_wave)
+    var dcose: Double = bessel.dx_spherical_bessel_2nd(kr, partial_wave)
+    // println(sine, cose, dsine, dcose)
+    dsine = dsine*k
+    dcose = dcose*k
+    // println(dsine, dcose)
+    val s: Double = (dsine*wave(grid.N_grid-4) - sine*grad)/k
+    val c: Double = (dcose*wave(grid.N_grid-4) - cose*grad)/k
+    val ph: Double = math.atan(s/c)
+    // println(s, c, ph)
+    ph
   }
 }
-  // 
-  // Fortran numerov module, need to write in scala
-  // 
-
-  // CALL AJ(KR,L,sine)
-  // CALL AN(KR,L,cose)
-  // CALL AJP(KR,L,dsine)
-  // CALL ANP(KR,L,dcose)
-
-  // dsine = dsine*K
-  // dcose = dcose*K
-
-  // S     = (dsine*Wave(NGrid-4) - sine*Grad)/K
-  // C     = (dcose*Wave(NGrid-4) - cose*Grad)/K
-  // ph    = ATAN(S/C)
-  // }
 
 class Grid(energyC: Double, pot: Potential, coll: Collision) {
   val energy: Double = energyC
@@ -269,37 +271,39 @@ class Grid(energyC: Double, pot: Potential, coll: Collision) {
 
 }
 
-class bessel() {
+class Bessel() {
  
   def spherical_bessel_1st(x: Double, j: Int) = {
     val IAccuracy: Int = 20 
-    val big: Double = 1.0d20
+    val big: Double = 1.0e20
     val jbig: Int = j + (math.sqrt((j*IAccuracy).toDouble)).toInt
     var bes: Double = 0.0d
     var temp: Double = 0.0d
     if (j == 0) {
       bes = math.sin(x)
     } else if (j == 1) {
-      bes = sin(x)/x - cos(x)
+      bes = math.sin(x)/x - math.cos(x)
     } else {
-      if (x > j.toDouble+0.5d) {
+      if (x > (j.toDouble+0.5d)) {
         // use upward recurrance
         var fm1: Double = math.sin(x)/x - math.cos(x)
         var fm2: Double = math.sin(x)
         var N: Int = 2
+        var f: Double = 0.0d
         for (N <- 2 to j) {
-          var f: Double = (2.0d*N.toDouble-1.0d)*fm1/x - fm2
+          f = (2.0d*N.toDouble-1.0d)*fm1/x - fm2
           fm2 = fm1
           fm1 = f
         }
         bes = f
       } else {
         // use downward recurrance
-        var fp1: Double = 1.0d-20
-        var fp2: Double = 1.0d-20
-        var N: Int = 0
-        for (N <- jbig to -1) {
-          var f: Double = (2.0d*N.toDouble+3.0d)*fp1/x - fp2
+        var fp1: Double = 1.0e-20
+        var fp2: Double = 1.0e-20
+        var f: Double = 0.0d
+        var N: Int = jbig
+        while (N >= jbig) {
+          f = (2.0d*N.toDouble+3.0d)*fp1/x - fp2
           if (N == j) {
             temp = f 
           }
@@ -311,6 +315,7 @@ class bessel() {
               temp = temp/big
             }
           }
+          N = N - 1
           fp2 = fp1
           fp1 = f
         }
@@ -321,8 +326,9 @@ class bessel() {
   }
 
   def dx_spherical_bessel_1st(x: Double, j: Int) = {
+    var bes: Double = 0.0d 
     if (j == 0) {
-      val = bes: Double = math.cos(x)
+      bes = math.cos(x)
     } else {
       val pres: Double = spherical_bessel_1st(x,j)
       val futr: Double = spherical_bessel_1st(x,j+1)
@@ -341,9 +347,10 @@ class bessel() {
     } else {
       var fm2: Double = -math.cos(x)
       var fm1: Double = -math.cos(x)/x - math.sin(x)
+      var f: Double = 0.0d
       var N: Int = 2
       for (N <- 2 to j) {
-        var f: Double = (2.0d*N.toDouble-1.0d)*fm1/x - fm2
+        f = (2.0d*N.toDouble-1.0d)*fm1/x - fm2
         fm2 = fm1
         fm1 = f
       } 

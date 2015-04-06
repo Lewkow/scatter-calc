@@ -16,13 +16,19 @@ class Scatter(energyC: Double,
   val target: String = targetC
   val potential_type: String = potential_typeC
   val phase = new Phaseshift(energy, potential_type, coll)
+  // Get some cross sections with the phases
+  var cross_sections = new CrossSection(phase.phases, coll.wavenumber(energy))
+  val tcs = cross_sections.total_cross_section()
+  cross_sections.test_differential_cross_section
+  // printValues()
 
   def printValues() {
     val grid_start = phase.grid.start_pos 
     val grid_end = phase.grid.end_pos 
-    println(s"Energy:       $energy [eV]")
-    println(s"Grid Start:   $grid_start [a0]")
-    println(s"Grid End:     $grid_end [a0]")
+    coll.printValues()
+    println(f"Energy:       $energy%1.3f [eV]")
+    println(f"TCS:          $tcs%1.3f [a0^2]")
+
   }
 
 }
@@ -37,7 +43,6 @@ class Collision(projectile: String,
   val projectile_mass: Double = masses(projectile)
   val target_mass: Double = masses(target)
   val reduced_mass: Double = reducedMass(projectile_mass,target_mass)
-  printValues()
 
   def reducedMass(proj: Double, targ: Double): Double = {
     val denom: Double = proj + targ
@@ -49,17 +54,51 @@ class Collision(projectile: String,
     math.sqrt(2.0d*reduced_mass*energy)
   }
 
+  def printLine() {
+    println("--------------------------------")
+  }
+
   def printValues() {
+    printLine()
     println(s"Projectile:   $projectile") 
-    println(s"Mass:         $projectile_mass [u]")
+    println(f"Mass:         $projectile_mass%1.3f [u]")
+    printLine()
     println(s"Target:       $target")
-    println(s"Mass:         $target_mass [u]")
-    println(s"Reduced Mass: $reduced_mass [u]")
+    println(f"Mass:         $target_mass%1.3f [u]")
+    printLine()
+    println(f"Reduced Mass: $reduced_mass%1.3f [u]")
+    printLine()
   }
 
 }
 
-class CrossSection(phases: ListBuffer[Double]) {
+class CrossSection(phases: ListBuffer[Double], wavenumber: Double) {
+
+  def test_differential_cross_section() {
+    val N: Int = 100
+    val dtheta: Double = math.Pi/N.toDouble
+    var i: Int = 1
+    for (i <- 0 to N) {
+      val theta: Double = i.toDouble*dtheta
+      val dcs: Double = differential_cross_section(theta)
+      println(f"Theta: $theta%1.2f   DCS: $dcs%1.2f")
+    }
+  }
+
+  def differential_cross_section(theta: Double): Double = {
+    var reAmp: Double = 0.0d
+    var imAmp: Double = 0.0d
+    var i: Int = 0
+    val LMax: Int = phases.length-1
+    var sm = new ScatterMath()
+    val leg = sm.legendre(math.cos(theta),LMax)
+    for (i <- 0 to LMax) {
+      var coeff: Double = (2.0d*i.toDouble+1.0d)*leg(i)*math.sin(phases(i))
+      reAmp = reAmp + coeff*math.cos(phases(i))
+      imAmp = imAmp + coeff*math.sin(phases(i))
+    }
+    (1.0d/(wavenumber*wavenumber))*(reAmp*reAmp+imAmp*imAmp)
+  }
 
   def total_cross_section(): Double = {
     var i: Int = 0
@@ -69,8 +108,10 @@ class CrossSection(phases: ListBuffer[Double]) {
       var sin_phase = math.sin(phases(i))
       tcs += (2.0d*i.toDouble+1.0d)*sin_phase*sin_phase
     } 
-    tcs
+    tcs*(4.0d*math.Pi/(wavenumber*wavenumber))
   }
+
+
 
 }
 
@@ -80,9 +121,6 @@ class Phaseshift(energy: Double, potential_type: String, coll: Collision) {
   val grid = new Grid(energy, pot, coll)
   var phases = new ListBuffer[Double]
   phases = get_phases()
-  var cross_sections = new CrossSection(phases)
-  val tcs = cross_sections.total_cross_section()
-  println(s"TCS:          $tcs")
 
   def get_phases() = {
     val small_phase: Double = 5.0e-7
@@ -154,7 +192,7 @@ class Phaseshift(energy: Double, potential_type: String, coll: Collision) {
     val kr: Double = k*grid.pos_grid(grid.N_grid-4)
     // println(d1, d2, d4, d12, d24)
     // println(grad, kr)
-    val bessel = new Bessel()
+    val bessel = new ScatterMath()
     var sine: Double = bessel.spherical_bessel_1st(kr, partial_wave)
     var cose: Double = bessel.spherical_bessel_2nd(kr, partial_wave)
     var dsine: Double = bessel.dx_spherical_bessel_1st(kr, partial_wave)
@@ -179,6 +217,12 @@ class Grid(energyC: Double, pot: Potential, coll: Collision) {
   val N_grid: Int = grid_N_finder() 
   val pos_grid: Array[Double] = build_pos_grid()
   val pot_grid: Array[Double] = build_pot_grid()
+  // printValues()
+
+  def printValues() {
+    println(f"Grid Start:   $start_pos%1.3f [a0]")
+    println(f"Grid End:     $end_pos%1.3f [a0]")
+  }
 
   def grid_dr_finder(): Double = {
     val k_max: Double = math.sqrt(2.0d*coll.reduced_mass*(energy+pot.depth))
@@ -271,7 +315,20 @@ class Grid(energyC: Double, pot: Potential, coll: Collision) {
 
 }
 
-class Bessel() {
+class ScatterMath() {
+
+  def legendre(x: Double, n: Int): Array[Double] = {
+    val L: Int = n+1
+    val leg = new Array[Double](L)
+    leg(0) = 1.0d
+    leg(1) = x
+    var i: Int = 2
+    for (i <- 1 to (L-2)) {
+      var nn: Double = (i-1).toDouble
+      leg(i+1) = ( (2.0d*nn+1.0d) / (nn+1.0d) )*x*leg(i) - ( nn / (nn+1.0d) )*leg(i-1)
+    } 
+    leg
+  }
  
   def spherical_bessel_1st(x: Double, j: Int) = {
     val IAccuracy: Int = 20 

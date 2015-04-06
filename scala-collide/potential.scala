@@ -4,7 +4,7 @@ class Potential(potential_methodC: String) {
   val potential_method: String = potential_methodC
   val depth = get_depth(true)
   val depth_pos = get_depth(false)
-  print_values()
+  // print_values()
 
   // pass interparticle distance [u]
   def get_potential(r: Double): Double = {
@@ -56,7 +56,7 @@ class Potential(potential_methodC: String) {
   }
 
   def print_values() = {
-    println(s"Depth:        $depth [eV]")
-    println(s"Depth Pos:    $depth_pos [a0]")
+    println(f"Depth:        $depth%1.3f [eV]")
+    println(f"Depth Pos:    $depth_pos%1.3f [a0]")
   }
 }

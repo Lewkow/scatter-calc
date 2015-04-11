@@ -19,8 +19,6 @@ class Scatter(energyC: Double,
   // Get some cross sections with the phases
   var cross_sections = new CrossSection(phase.phases, coll.wavenumber(energy))
   val tcs = cross_sections.total_cross_section()
-  cross_sections.test_differential_cross_section
-  // printValues()
 
   def printValues() {
     val grid_start = phase.grid.start_pos 

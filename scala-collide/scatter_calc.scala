@@ -11,8 +11,17 @@ object scatter_calc {
     test_differential_cross_section_file
   }
 
+  def get_header(calc_type: String, 
+                 energy: Double,
+                 proj: String,
+                 targ: String,
+                 pot_type: String):String = {
+    val a = "-".toString
+    calc_type + a + energy.toString + a + proj + a + targ + a + pot_type
+  }
+
   def test_differential_cross_section_file() {
-    val energy: Double = 50.0d
+    val energy: Double = 10.0d
     val proj: String = "H"
     val targ: String = "H"
     val pot: String  = "LJ"
@@ -26,7 +35,8 @@ object scatter_calc {
       theta(i) = i*dt
       dcs(i)   = test_scatter.cross_sections.differential_cross_section(theta(i))
     }
-    print_xy_to_file("./data/test_dcs.dat", "dcs", theta, dcs)
+    val header:String = get_header("dcs",energy,proj,targ,pot)
+    print_xy_to_file("./data/scatter_calc_out.dat", header, theta, dcs)
   }
 
   def print_xy_to_file(filename: String, header: String, x: Array[Double], y: Array[Double]) {

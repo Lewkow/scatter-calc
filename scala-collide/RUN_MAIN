@@ -1,7 +1,0 @@
-#!/bin/bash
-
-clear
-scalac *.scala
-scala -cp . runtime.scatter_calc 
-
-

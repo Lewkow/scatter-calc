@@ -14,7 +14,8 @@ def reader(filename):
     raw = f.readlines()  
 
   for r in raw:
-    if "-" in r:
+    if "**" in r:
+      print("header -> %s" % r)
       header_lines.append(i)
       if len(header_lines) > 1:
         content_end_lines.append(i)
@@ -26,6 +27,10 @@ def reader(filename):
     except:
       content = raw[header_lines[h]+1:]
     x = []; y = [];
+    # print('-----------')
+    # print(h)
+    # print(content)
+    # print('-----------')
     for c in content:
       x.append(float(c.split(",")[0])) 
       y.append(float(c.split(",")[1]))
@@ -33,6 +38,7 @@ def reader(filename):
   return data
 
 def header_parse(header):
+  header = header[3:]
   try:
     hs        = header.split("-")
     calc_type = hs[0].rstrip()
@@ -41,7 +47,8 @@ def header_parse(header):
     targ      = hs[3].rstrip()
     pot_type  = hs[4].rstrip()
   except:
-    calc_type = None; energy = None; proj = None; targ = None; pot_type = None;
+    calc_type = "default"; energy = "default"; proj = "default"; 
+    targ = "default"; pot_type = "default";
   return (calc_type, energy, proj, targ, pot_type)
 
 def plot_scatter(filename="./data/scatter_calc_out.dat"):
@@ -51,6 +58,7 @@ def plot_scatter(filename="./data/scatter_calc_out.dat"):
     filename = "./plots/"+str(ct)+"_"+str(e)+"eV_"+str(p)+"-"+str(t)+"_"+str(pot)
     (x,y) = data[h]
     if ct == "dcs":
+      # print(x) 
       plot_dcs(filename, h, x, y)
 
 def plot_dcs(outfile, header, x, y, show_plot=False, save_plot=True):
@@ -63,7 +71,8 @@ def plot_dcs(outfile, header, x, y, show_plot=False, save_plot=True):
   if show_plot is True:
     plt.show()
   if save_plot is True:
-    outf = outfile.split(".dat")[0]+".png"
+    outf = outfile.split(".dat")[0]+".eps"
+    # outf = outfile.split(".dat")[0]+".png"
     fig.savefig(outf, dpi=fig.dpi)
 
 

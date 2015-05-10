@@ -7,3 +7,4 @@ class Mongo() {
   val db = mongoClient("scatter")
   
 }
+

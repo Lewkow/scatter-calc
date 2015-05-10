@@ -28,7 +28,7 @@ class CrossSection(phases: ListBuffer[Double], wavenumber: Double) {
       reAmp = reAmp + coeff*math.cos(phases(i))
       imAmp = imAmp + coeff*math.sin(phases(i))
     }
-    (1.0d/(wavenumber*wavenumber))*(reAmp*reAmp+imAmp*imAmp)
+    (1.0d/(wavenumber*wavenumber))*(reAmp*reAmp+imAmp*imAmp).toDouble
   }
 
   def total_cross_section(): Double = {

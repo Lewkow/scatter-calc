@@ -24,6 +24,11 @@ class Scatter(energyC: Double,
   var cross_sections = new CrossSection(phase.phases, coll.wavenumber(energy))
   val tcs = cross_sections.total_cross_section()
 
+  def get_dcs(theta: Double): Double = {
+    val dcs: Double = cross_sections.differential_cross_section(theta)
+    dcs
+  }
+
   def printValues() {
     val grid_start = phase.grid.start_pos 
     val grid_end = phase.grid.end_pos 

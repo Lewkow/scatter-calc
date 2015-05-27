@@ -7,11 +7,16 @@ import mongo.Mongo
 import scatter_math.ScatterMath
 import scala.collection.mutable.ListBuffer
 
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
+import org.apache.spark.SparkConf
+import org.apache.spark.sql._
+import org.apache.spark.rdd._
 
 class Scatter(energyC: Double, 
               projectileC: String, 
               targetC: String,
-              potential_typeC: String) {
+              potential_typeC: String) extends Serializable {
 
   import math.sqrt
   val energy: Double = energyC
@@ -41,7 +46,7 @@ class Scatter(energyC: Double,
 }
 
 class Collision(projectile: String,
-                target: String) {
+                target: String) extends Serializable {
 
   val masses = Map("H"->1.00782503207d,
                    "He3"->3.0160293191d,
@@ -79,14 +84,31 @@ class Collision(projectile: String,
 
 }
 
-class Phaseshift(energy: Double, potential_type: String, coll: Collision) {
+class Phaseshift(energy: Double, potential_type: String, coll: Collision) extends Serializable {
   val MAX_GRID_SIZE = 100000
   val pot = new Potential(potential_type)
   val grid = new Grid(energy, pot, coll)
-  var phases = new ListBuffer[Double]
-  phases = get_phases()
+  // val phases = get_phases()
+  val phases = get_spark_phases()
 
-  def get_phases() = {
+  def get_spark_phases(): Array[Double] = {
+    val conf = new SparkConf().setAppName("CIS Views").setMaster("spark://MA01322RFH0:7077")
+    val sc = new SparkContext(conf)
+    val small_phase: Double = 5.0e-7
+    var keep_going: Boolean = true
+    var converge_counter: Int = 0
+    val max_converge_counter: Int = 30
+    var partial_wave: Array[Int] = 0 to 1000 toArray
+    val r0 = sc.parallelize(partial_wave)
+    val r1 = r0.map(x => numerov(x))
+    val p = r1.collect
+    val phase = p.toArray
+    for (i <- 0 to phase.length-1) {println(phase(i))}
+    println("energy: " + energy.toString + " phaseshift: " + phase.toString)
+    phase
+  }
+
+  def get_phases(): Array[Double] = {
     val small_phase: Double = 5.0e-7
     var partial_wave: Int = 0
     var keep_going: Boolean = true
@@ -106,7 +128,8 @@ class Phaseshift(energy: Double, potential_type: String, coll: Collision) {
       }
       partial_wave += 1
     }
-    phase
+    println("energy: " + energy.toString + " phaseshift: " + phase.toString)
+    phase.toArray
   }
 
   def dummy_numerov(partial_wave: Int) = {
@@ -169,11 +192,15 @@ class Phaseshift(energy: Double, potential_type: String, coll: Collision) {
     val c: Double = (dcose*wave(grid.N_grid-4) - cose*grad)/k
     val ph: Double = math.atan(s/c)
     // println(s, c, ph)
-    ph
+    if (ph.isNaN) {
+      0.0.toDouble
+    } else {
+      ph
+    }
   }
 }
 
-class Grid(energyC: Double, pot: Potential, coll: Collision) {
+class Grid(energyC: Double, pot: Potential, coll: Collision) extends Serializable {
   val energy: Double = energyC
   val start_pos: Double = grid_start_finder() 
   val end_pos: Double = grid_end_finder()

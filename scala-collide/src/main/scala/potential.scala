@@ -1,6 +1,6 @@
 package potential
 
-class Potential(potential_methodC: String) {
+class Potential(potential_methodC: String) extends Serializable {
   val potential_method: String = potential_methodC
   val depth = get_depth(true)
   val depth_pos = get_depth(false)

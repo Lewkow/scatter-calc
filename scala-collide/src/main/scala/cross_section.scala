@@ -3,7 +3,7 @@ package cross_section
 import scatter_math.ScatterMath
 import scala.collection.mutable.ListBuffer
 
-class CrossSection(phases: ListBuffer[Double], wavenumber: Double) {
+class CrossSection(phases: Array[Double], wavenumber: Double) {
 
   def test_differential_cross_section() {
     val N: Int = 100

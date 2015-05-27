@@ -1,14 +1,16 @@
-package runtime
+// package runtime
 
 import java.io._
 import scatter.Scatter
+import spark_scatter.SparkScatter
 
-object scatter_calc {
+object scatter_calc extends Serializable {
 
   def main(args: Array[String]) {
     // val test_scatter = new Scatter(100.0d, "H", "H", "LJ")
     // test_scatter.printValues()
     test_differential_cross_section_file
+
   }
 
   def get_header(calc_type: String, 

@@ -38,7 +38,7 @@ object scatter_calc extends Serializable {
       theta(i) = i*dt
       dcs(i)   = test_scatter.cross_sections.differential_cross_section(theta(i))
     }
-    val header:String = get_header("dcs",energy,proj,targ,pot)
+    val header: String = get_header("dcs",energy,proj,targ,pot)
     print_xy_to_file("./data/scatter_calc_out.dat", header, theta, dcs)
   }
 

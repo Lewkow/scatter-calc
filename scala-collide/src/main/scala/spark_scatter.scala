@@ -13,7 +13,8 @@ import scala.collection.mutable.ArrayBuffer
 
 class SparkScatter {
 
-  val conf     = new SparkConf().setAppName("CIS Views")
+  val conf     = new SparkConf().setAppName("Phase Scatter").setMaster("spark://MA01322RFH0:7077")
+  // val conf     = new SparkConf().setAppName("Phase Scatter")
   val sc       = new SparkContext(conf)
 
   val x = 1 to 100 toArray

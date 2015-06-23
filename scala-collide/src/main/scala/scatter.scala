@@ -25,8 +25,10 @@ class Scatter(energyC: Double,
   val target: String = targetC
   val potential_type: String = potential_typeC
   val phase = new Phaseshift(energy, potential_type, coll)
+  val collision_id: String = projectile + "_" + target + "_" +
+                             potential_type
   // Get some cross sections with the phases
-  var cross_sections = new CrossSection(phase.phases, coll.wavenumber(energy))
+  var cross_sections = new CrossSection(collision_id, phase.phases, coll.wavenumber(energy), energy)
   val tcs = cross_sections.total_cross_section()
 
   def get_dcs(theta: Double): Double = {
@@ -88,8 +90,8 @@ class Phaseshift(energy: Double, potential_type: String, coll: Collision) extend
   val MAX_GRID_SIZE = 100000
   val pot = new Potential(potential_type)
   val grid = new Grid(energy, pot, coll)
-  // val phases = get_phases()
-  val phases = get_spark_phases()
+  val phases = get_phases()
+  // val phases = get_spark_phases()
 
   def get_spark_phases(): Array[Double] = {
     val conf = new SparkConf().setAppName("CIS Views").setMaster("spark://MA01322RFH0:7077")
@@ -128,7 +130,7 @@ class Phaseshift(energy: Double, potential_type: String, coll: Collision) extend
       }
       partial_wave += 1
     }
-    println("energy: " + energy.toString + " phaseshift: " + phase.toString)
+    // println("energy: " + energy.toString + " phaseshift: " + phase.toString)
     phase.toArray
   }
 

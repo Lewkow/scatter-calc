@@ -1,9 +1,10 @@
 package cross_section
 
 import scatter_math.ScatterMath
+import mongo.Mongo
 import scala.collection.mutable.ListBuffer
 
-class CrossSection(phases: Array[Double], wavenumber: Double) {
+class CrossSection(collision_id: String, phases: Array[Double], wavenumber: Double, energy: Double) {
 
   def test_differential_cross_section() {
     val N: Int = 100
@@ -28,7 +29,14 @@ class CrossSection(phases: Array[Double], wavenumber: Double) {
       reAmp = reAmp + coeff*math.cos(phases(i))
       imAmp = imAmp + coeff*math.sin(phases(i))
     }
-    (1.0d/(wavenumber*wavenumber))*(reAmp*reAmp+imAmp*imAmp).toDouble
+    val dcs = (1.0d/(wavenumber*wavenumber))*(reAmp*reAmp+imAmp*imAmp).toDouble
+    try {
+      val mongo = new Mongo()
+      mongo.write_dcs(collision_id, energy, theta, dcs)
+    } catch {
+      case e: Exception => println("Failed connection to mongoDB")
+    }
+    dcs
   }
 
   def total_cross_section(): Double = {
@@ -39,7 +47,14 @@ class CrossSection(phases: Array[Double], wavenumber: Double) {
       var sin_phase = math.sin(phases(i))
       tcs += (2.0d*i.toDouble+1.0d)*sin_phase*sin_phase
     } 
-    tcs*(4.0d*math.Pi/(wavenumber*wavenumber))
+    val tcs_tot = tcs*(4.0d*math.Pi/(wavenumber*wavenumber))
+    try {
+      val mongo = new Mongo()
+      mongo.write_tcs(collision_id, energy, tcs_tot)
+    } catch {
+      case e: Exception => println("Failed connection to mongoDB")
+    }
+    tcs_tot
   }
 
 
